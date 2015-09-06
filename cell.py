@@ -200,6 +200,9 @@ class Matrix:
         self.clear_matrix()
         self.cell_seed()
         self.tick = 0
+        if self.edit:
+            self.panel.edit_enable(False)
+            self.activate()
 
     def clear_matrix(self):
         self.grid.clear()
