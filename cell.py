@@ -131,6 +131,8 @@ class Matrix:
         screen.blit(background, (0,0))
         pygame.display.flip()
         pygame.display.set_caption('Cell Matrix')
+        icon = pygame.image.load(os.path.join('data', 'icon.png'))
+        pygame.display.set_icon(icon)
         pygame.event.set_blocked(pygame.MOUSEMOTION)
         pygame.key.set_repeat(100,10)
         panel = MatrixInterface(self)
