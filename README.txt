@@ -1,7 +1,7 @@
 Cell Matrix - Implementation of Conway's Game of Life Algorithm
 
 Project site:
-http://gatc.ca/projects/cellmatrix/
+http://gatc.ca/projects/cell-matrix/
 
 
 Dependencies:
