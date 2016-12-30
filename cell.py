@@ -35,12 +35,8 @@ else:
     import pyjsdl as pygame
     platform = 'js'
 
-try:
-    import interphase as interphase
-    interphase.init(pygame)
-except ImportError:
-    print('Interphase module not found.')
-    interphase = None
+import interphase
+interphase.init(pygame)
 
 import env
 env.engine = pygame
@@ -51,10 +47,7 @@ env.color0 = pygame.Color(0,0,0)
 env.color1 = pygame.Color(0,255,0)
 
 from control import Control
-if interphase:
-    from interface import MatrixInterface
-else:
-    from control import Interface as MatrixInterface
+from interface import MatrixInterface
 
 
 class Matrix:
