@@ -368,12 +368,10 @@ class Matrix:
 
     def update(self):
         self.update_list[:] = []
-        self.quit = self.control.update()
-        if self.quit:
-            return
-        self.panel.update()
+        self.control.update()
         if self.panel_display:
             self.clear_panel()
+        self.panel.update()
         if not self.pause:
             if not self.tick:
                 self.cell_growth()
