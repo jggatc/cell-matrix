@@ -31,6 +31,8 @@ elif os.name == 'java':
     sys.modules['pygame'] = pyj2d
     pygame = pyj2d
     platform = 'jvm'
+    if sys.version_info[0:2] == (2,2):
+        from sets import Set as set
 else:
     import pyjsdl as pygame
     platform = 'js'
@@ -82,11 +84,11 @@ class Matrix:
             self.panel_display = False
         self.display_update = False
         if env.platform in ('pc','jvm'):
-            self.xrange = range((width//10), width-(width//10))
-            self.yrange = range((height//10), height-(height//10))
+            self.xrange = list(range((width//10), width-(width//10)))
+            self.yrange = list(range((height//10), height-(height//10)))
         else:
-            self.xrange = range((width//5), width-(width//5))
-            self.yrange = range((height//5), height-(height//5))
+            self.xrange = list(range((width//5), width-(width//5)))
+            self.yrange = list(range((height//5), height-(height//5)))
         self.view = [0,0]
         self.scroll = False
         self.grid = {}
@@ -102,12 +104,7 @@ class Matrix:
         self.pause = False
         self.edit = False
         self.change = False
-        try:
-            self.neighbor_set = set()
-        except NameError:   #required for jython2.2.1
-            from sets import Set as set
-            globals()['set'] = set
-            self.neighbor_set = set()
+        self.neighbor_set = set()
         self.neighbors = {}
         self.neighbor_cache_init()
         self.ticks = 6

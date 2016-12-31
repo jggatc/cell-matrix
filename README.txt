@@ -5,15 +5,18 @@ http://gatc.ca/projects/cell-matrix/
 
 
 Dependencies:
-Python 2.7 (https://www.python.org/)
+Python 2.7+ (https://www.python.org/)
 Pygame 1.9.1 (http://www.pygame.org/)
 
-Optional dependencies:
-Interphase 0.87 (http://gatc.ca/projects/interphase/)
+Usage:
+Interphase module (http://gatc.ca/projects/interphase/)
+>GUI interface module.
+PyJ2D 0.27 (http://gatc.ca/projects/pyj2d/) / Jython 2.2.1+ (http://www.jython.org/)
+>Optional to port Pygame app to Java environment of JVM 6.0+.
 
 
 Instructions:
-Cell Matrix runs with Python2.7 and the Pygame library. The Interphase module is recommended and if not available in the distribution can be obtained from its project site (http://gatc.ca/projects/interphase/) or Github repository (https://github.com/jggatc/interphase/). Input of Game of Life patterns can be done from the interface panel by the controls LOAD from a customized pattern.txt file and GET from the system clipboard. The app is run with the command 'python run_app.py'.
+Cell Matrix runs with Python and the Pygame library. Input of Game of Life patterns can be done from the interface panel by the controls LOAD from a customized pattern.txt file and GET from the system clipboard. The app is run with the command 'python run_app.py'.
 
 Controls
 Scroll up (UP/KP8)
