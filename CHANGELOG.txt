@@ -1,6 +1,11 @@
-0.90_dev
+1.0     2017-04-17
 -update matrix reset to turn off edit mode.
 -add icon for the system display.
 -update for py3 compatibility.
 -update interphase module.
+-update app for alternate framework.
+
+0.9     2015-09-05
+
+-initial release
 
