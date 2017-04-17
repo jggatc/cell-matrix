@@ -123,6 +123,7 @@ class Interface(engine.sprite.Sprite):
         tips_fontcolor: (r,g,b) font color used for tip text <(125,130,135)>.
         tips_position: (x,y) position offset of tip text <(0,-15)>.
         control_response: int control click response (ms) <125>.
+            - 0 for no response repeat.
         pointer_interact: bool pointer interact monitored <False>.
         data_folder: '' image data folder <'data'>.
         data_zip: '' image data zip <None>.
@@ -153,13 +154,12 @@ class Interface(engine.sprite.Sprite):
         self._moveable = moveable                            #panel moveable
         self._positionx, self._positiony = self._x, self._y     #panel original placement
         self._offsetx, self._offsety = position_offset
-        directionx, directiony = move_rate        #panel move speed
-        if directionx < 1:
-            directionx = directionx * abs(self._offsetx)
-        if directiony < 1:
-            directiony = directiony * abs(self._offsety)
-        self._directionx, self._directiony = int(directionx), int(directiony)
-        self._move_ratex, self._move_ratey = int(self._directionx/40), int(self._directiony/40)
+        self._move_ratex, self._move_ratey = move_rate      #panel move speed
+        if self._move_ratex < 1:
+            self._move_ratex = self._move_ratex * abs(self._offsetx)
+        if self._move_ratey < 1:
+            self._move_ratey = self._move_ratey * abs(self._offsety)
+        self._move_time = 0
         self._move_initiate = False
         self._color = color
         self._initialized = False
@@ -244,11 +244,6 @@ class Interface(engine.sprite.Sprite):
         self._control_move = None   #control selected to move
         self._pointer_position = (0,0)
         self._pointer_interact = pointer_interact   #detect control hover
-        self._clock = engine.time.Clock()
-        for i in range(100):    #issue in _moveable_panel division when get_fps() return 0.0
-            if 30 <= self._clock.get_fps() < 100:
-                break
-            self._clock.tick(30)
         self._update_panel = True   #set for panel update
         self._initial_update = 10   #panel updates for short duration
         self._panel_function = []   #list of panel functions to run on panel update
@@ -259,6 +254,16 @@ class Interface(engine.sprite.Sprite):
         self._events = {}
         self._events['controlselect'] = engine.event.Event(EVENT['controlselect'], self._interface)
         self._events['controlinteract'] = engine.event.Event(EVENT['controlinteract'], self._interface)
+        if engine.__name__ == 'pyjsdl':
+            global _touchevt
+            if not _touchevt:
+                _touchevt = _TouchEvt()
+            if _touchevt.active:
+                self._get_mouse_pos = self._get_mouse_pos_alt
+                self._get_mouse_click = self._get_mouse_click_alt
+            else:
+                _touchevt.interfaces.append(self)
+            self.touchactive = False
         self.add_controls()
         self.activate()
 
@@ -726,7 +731,7 @@ class Interface(engine.sprite.Sprite):
         if position_offset:
             self._offsetx, self._offsety = position_offset
         if move_rate:
-            self._directionx, self._directiony = move_rate
+            self._move_ratex, self._move_ratey = move_rate
         if setting == 'Toggle':
             self._moveable = not self._moveable
             return self._moveable
@@ -975,6 +980,34 @@ class Interface(engine.sprite.Sprite):
             self._control_moveable = setting
             return self._control_moveable
 
+    def _get_mouse_pos(self):
+        pos = engine.mouse.get_pos()
+        col = self.rect.collidepoint(pos)
+        return pos, col
+
+    def _get_mouse_click(self):
+        return engine.mouse.get_pressed()[0]
+
+    def _get_mouse_pos_alt(self):
+        if _touchevt.touchactive:
+            pos = _touchevt.touchx+engine.env.frame.scrollLeft, _touchevt.touchy+engine.env.frame.scrollTop
+            col = self.rect.collidepoint(pos)
+            if col:
+                self.touchactive = True
+                if not _touchevt.touchhold:
+                    _touchevt.touchactive = False
+                    _touchevt.touchx, _touchevt.touchy = -1, -1
+                return pos, col
+            else:
+                return (-1,-1), False
+        else:
+            self._control_press['control'] = None
+            self.touchactive = False
+            return (-1,-1), False
+
+    def _get_mouse_click_alt(self):
+        return self.touchactive
+
     def _display_controls(self):
         """Draws controls on panel.""" 
         if self._panel_active:
@@ -1063,19 +1096,17 @@ class Interface(engine.sprite.Sprite):
         """Update moveable panel."""
         def move_panel(pos_i, pos_f, z, z_dir, rate_x=0, rate_y=0):
             if not self._move_initiate:
-                fps = self._clock.get_fps()
-                self._move_ratex = int(self._directionx/fps)
-                if not self._move_ratex:
-                    self._move_ratex = 1
-                self._move_ratey = int(self._directiony/fps)
-                if not self._move_ratey:
-                    self._move_ratey = 1
+                self._move_time = engine.time.get_ticks()
                 self._move_initiate = True
+                return pos_i
+            timei = self._move_time
+            self._move_time = engine.time.get_ticks()
+            dt = self._move_time - timei
             if rate_x:
-                rate_x = rate_x*z_dir * z
+                rate_x = int(rate_x*z_dir * z * (dt/1000))
                 rate = rate_x
             else:
-                rate_y = rate_y*z_dir * z
+                rate_y = int(rate_y*z_dir * z * (dt/1000))
                 rate = rate_y
             if abs(pos_i-pos_f) > abs(rate):
                 self.rect.move_ip((rate_x, rate_y))
@@ -1122,9 +1153,9 @@ class Interface(engine.sprite.Sprite):
 
     def _panel_interaction(self):
         """Check for mouse interaction with panel."""
-        self._pointer_position = engine.mouse.get_pos()
+        self._pointer_position, interact = self._get_mouse_pos()
         if self._displayed:
-            if not self.rect.collidepoint(self._pointer_position):
+            if not interact:
                 self._panel_interact = False
                 self._displayed = False
                 if not self._panel_display:
@@ -1134,7 +1165,7 @@ class Interface(engine.sprite.Sprite):
             else:
                 self._panel_interact = True
         else:
-            if self.rect.collidepoint(self._pointer_position):
+            if interact:
                 self._panel_interact = True
                 self._panel_active = True
                 self._displayed = True
@@ -1181,7 +1212,7 @@ class Interface(engine.sprite.Sprite):
         """Check control selected."""
         if not self._displayed or not self._panel_active or self._panel_disabled:
             return None, None
-        if not engine.mouse.get_pressed()[0]:
+        if not self._get_mouse_click():
             if self._control_press['control']:
                 self._control_press['control'] = None
             if self._scroll_button is None:
@@ -1223,15 +1254,16 @@ class Interface(engine.sprite.Sprite):
                         return control_select, button_select
         else:
             if self._control_press['control'].active:
-                time = engine.time.get_ticks()
-                if (time-self._control_press['rtime']) > self._control_press['response']:
-                    self._control_press['rtime'] = engine.time.get_ticks()
-                    control_select = self._control_press['control'].id
-                    button_select = self._control_press['button']
-                    if not self._control_press['hold'] or (time-self._control_press['htime']) < self._control_press['hold']:
-                        self._control_press['response'] = self._control_press['control'].control_response
-                    else:
-                        self._control_press['response'] = self._control_press['control'].control_response_hold
+                if self._control_press['response']:
+                    time = engine.time.get_ticks()
+                    if (time-self._control_press['rtime']) > self._control_press['response']:
+                        self._control_press['rtime'] = time
+                        control_select = self._control_press['control'].id
+                        button_select = self._control_press['button']
+                        if not self._control_press['hold'] or (time-self._control_press['htime']) < self._control_press['hold']:
+                            self._control_press['response'] = self._control_press['control'].control_response
+                        else:
+                            self._control_press['response'] = self._control_press['control'].control_response_hold
             else:
                 self._control_press['control'] = None
         return control_select, button_select
@@ -1266,7 +1298,6 @@ class Interface(engine.sprite.Sprite):
                 self._update_panel = True
             else:
                 button_select, value = None, None
-        self._clock.tick()
         if force_update:
             self._update_panel = True
         if self._update_panel:
@@ -1349,4 +1380,46 @@ class InterfaceState(object):
         self.button = button_select
         self.value = value
         self.values = panel._control_values
+
+
+class _TouchEvt:
+
+    def __init__(self):
+        self.touchobj = None
+        self.touchx = -1
+        self.touchy = -1
+        self.touchactive = False
+        self.touchhold = False
+        self.interfaces = []
+        self.absoluteLeft = None
+        self.absoluteTop = None
+        self.active = False
+        engine.event.touchlistener.add_callback(self)
+
+    def onTouchInitiate(self, event):
+        for _interface in self.interfaces:
+            _interface._get_mouse_pos = _interface._get_mouse_pos_alt
+            _interface._get_mouse_click = _interface._get_mouse_click_alt
+        self.interfaces[:] = []
+        self.absoluteLeft = engine.env.canvas.getAbsoluteLeft()
+        self.absoluteTop = engine.env.canvas.getAbsoluteTop()
+        self.active = True
+
+    def onTouchStart(self, event):
+        self.touchactive = True
+        self.touchhold = True
+        self.touchobj = event.touches.item(0)
+        self.touchx = self.touchobj.clientX-self.absoluteLeft
+        self.touchy = self.touchobj.clientY-self.absoluteTop
+
+    def onTouchEnd(self, event):
+        self.touchhold = False
+
+    def onTouchMove(self, event):
+        pass
+
+    def onTouchCancel(self, event):
+        pass
+
+_touchevt = None
 
