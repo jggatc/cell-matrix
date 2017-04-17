@@ -1,3 +1,6 @@
+patterns = \
+"""
+
 //Game of Life Patterns
 //http://www.conwaylife.com
 
@@ -80,3 +83,4 @@ OO........O...O.OO....O.O
 ............**..............*
 ............*
 
+"""

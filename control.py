@@ -42,7 +42,7 @@ class Control:
                     self.matrix.view_scroll(self.dir_kp[event.key])
                 elif event.key == pygame.K_q:
                     self.matrix.quit = True
-            elif event.type == pygame.MOUSEBUTTONDOWN and not self.panel.panel_interact:
+            elif event.type == pygame.MOUSEBUTTONDOWN and not self.panel.rect.collidepoint(event.pos):
                 if event.button == 1:
                     x = (event.pos[0]//env.size) + self.matrix.view[0]
                     y = (event.pos[1]//env.size) + self.matrix.view[1]

@@ -32,7 +32,7 @@ elif os.name == 'java':
     pygame = pyj2d
     platform = 'jvm'
     if sys.version_info[0:2] == (2,2):
-        from sets import Set as set
+        from sets import Set
 else:
     import pyjsdl as pygame
     platform = 'js'
@@ -73,10 +73,10 @@ class Matrix:
             psize = self.panel.get_size()
             ppos = self.panel.get_position()
             self.panel_clear1 = pygame.Surface(psize)
-            self.panel_pos1 = pygame.Rect((ppos[0]-(psize[0]//2),ppos[1]-(psize[1]//2)-88), psize)
+            self.panel_pos1 = pygame.Rect((ppos[0]-(psize[0]//2),ppos[1]-(psize[1]//2)), psize)
             self.panel_clear1.blit(self.screen, (0,0), self.panel_pos1)     #pyjsdl blit - IndexSizeError - clip area
             self.panel_clear2 = pygame.Surface((psize[0],12))
-            self.panel_pos2 = pygame.Rect((ppos[0]-(psize[0]//2),ppos[1]-(psize[1]//2)-4), (psize[0],12))
+            self.panel_pos2 = pygame.Rect((ppos[0]-(psize[0]//2),ppos[1]-(psize[1]//2)+88), (psize[0],12))
             self.panel_clear2.blit(self.screen, (0,0), self.panel_pos2)
             self.panel_pos = ppos[1]
             self.panel_display = True
@@ -104,7 +104,11 @@ class Matrix:
         self.pause = False
         self.edit = False
         self.change = False
-        self.neighbor_set = set()
+        try:
+            self.neighbor_set = set()
+        except NameError:
+            self.neighbor_set = Set()
+            self.get_set = self.get_set_alt
         self.neighbors = {}
         self.neighbor_cache_init()
         self.ticks = 6
@@ -144,6 +148,14 @@ class Matrix:
         else:
             return set()
 
+    def get_set_alt(self):
+        if self.setPool:
+            s = self.setPool.pop()
+            s.clear()
+            return s
+        else:
+            return Set()
+
     def get_list(self):
         if self.listPool:
             lst = self.listPool.pop()
@@ -170,6 +182,7 @@ class Matrix:
     def view_reset(self):
         self.view[0] = 0
         self.view[1] = 0
+        self.change = True
         self.scroll = True
 
     def neighbor_cache_init(self):
@@ -205,10 +218,7 @@ class Matrix:
 
     def clear_panel(self):
         self.panel_pos = self.panel.get_position()[1]
-        if self.panel_pos == 353:
-            self.screen.blit(self.panel_clear1, self.panel_pos1)
-            self.update_list.append(self.panel_pos1)
-        elif self.panel_pos != 441:
+        if self.panel_pos != 441:
             self.screen.blit(self.panel_clear1, self.panel_pos1)
             self.update_list.append(self.panel_pos1)
         else:
@@ -216,11 +226,19 @@ class Matrix:
             self.update_list.append(self.panel_pos2)
 
     def paste_pattern(self, x, y, pattern=None):
-        if not pattern:
+        if pattern is None:
             pattern = self.panel.get_clipboard()
+            if not pattern:
+                return
+        pattern_start = False
         for line in pattern.split('\n'):
-            if not line or line.startswith('!') or line.startswith('#'):
-                continue
+            if not line or line.startswith(('!','#','//')):
+                if not pattern_start:
+                    continue
+                else:
+                    break
+            else:
+                pattern_start = True
             for i, char in enumerate(line):
                 if char == '.':
                     pass
@@ -392,15 +410,11 @@ class Matrix:
             else:
                 if self.panel_display:
                     self.cell_display_select()
+        if self.panel_display:
+            self.panel.draw(self.screen)
         if not self.scroll:
-            if self.panel_display:
-                rect = self.panel.draw(self.screen)
-                self.update_list.extend(rect)
-            if self.update_list:
-                pygame.display.update(self.update_list)
+            pygame.display.update(self.update_list)
         else:
-            if self.panel_display:
-                self.panel.draw(self.screen)
             pygame.display.update()
             self.scroll = False
 
@@ -430,7 +444,8 @@ def pre_run():
 
 def main_js():
     setup(60, 50)
-    img = ['data/control_n.png', 'data/control_s.png', 'data/control_w.png', 'data/control_e.png', 'data/button.png']
+    img = ['data/control_n.png', 'data/control_s.png', 'data/control_w.png',
+            'data/control_e.png', 'data/button.png', 'data/icon.png']
     pygame.display.setup(pre_run, img)
 
 
