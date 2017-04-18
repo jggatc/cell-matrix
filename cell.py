@@ -232,7 +232,7 @@ class Matrix:
                 return
         pattern_start = False
         for line in pattern.split('\n'):
-            if not line or line.startswith(('!','#','//')):
+            if not line or self.check_pattern_comment(line):
                 if not pattern_start:
                     continue
                 else:
@@ -245,6 +245,16 @@ class Matrix:
                 elif char in ('O','*'):
                     self.grid[x+i,y] = None
             y += 1
+
+    def check_pattern_comment(self, line):
+        try:
+            return line.startswith(('!','#','//'))
+        except TypeError:
+            for ch in ('!','#','//'):
+                if line.startswith(ch):
+                    return True
+            else:
+                return False
 
     def cell_add(self, x, y):
         self.grid[(x, y)] = None
