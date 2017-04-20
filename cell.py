@@ -68,7 +68,7 @@ class Matrix:
         self.listPool = []
         self.patterns = {}
         self.pattern_id = 0
-        self.screen, self.background, self.control, self.panel = self.setup(width,height)
+        self.screen, self.background, self.control, self.panel, self.clock = self.setup(width,height)
         if self.panel.matrix:
             psize = self.panel.get_size()
             ppos = self.panel.get_position()
@@ -132,7 +132,8 @@ class Matrix:
         panel = MatrixInterface(self)
         panel._clipboard_init()
         control = Control(self, panel)
-        return screen, background, control, panel
+        clock = pygame.time.Clock()
+        return screen, background, control, panel, clock
 
     def set_tick(self, value):
         ticks = {1:6, 2:3, 3:1, 4:0}[value]
@@ -396,10 +397,10 @@ class Matrix:
 
     def update(self):
         self.update_list[:] = []
-        self.control.update()
         if self.panel_display:
             self.clear_panel()
         self.panel.update()
+        self.control.update()
         if not self.pause:
             if not self.tick:
                 self.cell_growth()
@@ -427,6 +428,7 @@ class Matrix:
         else:
             pygame.display.update()
             self.scroll = False
+        self.clock.tick(30)
 
 
 def setup(w,h):

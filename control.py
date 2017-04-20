@@ -11,8 +11,6 @@ class Control:
     def __init__(self, matrix, panel):
         self.matrix = matrix
         self.panel = panel
-        self.fps = 30
-        self.clock = pygame.time.Clock()
         self.dir = {pygame.K_UP:(0,-1), pygame.K_DOWN:(0,1), pygame.K_LEFT:(-1,0), pygame.K_RIGHT:(1,0)}
         self.dir_kp = {pygame.K_KP8:(0,-1), pygame.K_KP2:(0,1), pygame.K_KP4:(-1,0), pygame.K_KP6:(1,0)}
 
@@ -60,6 +58,5 @@ class Control:
                         self.matrix.change = True
             elif event.type == pygame.QUIT:
                 self.matrix.quit = True
-        self.clock.tick(self.fps)
         return None
 
