@@ -3,7 +3,7 @@
 
 from __future__ import division
 import env
-pygame = env.engine
+pg = env.engine
 interphase = env.interface
 
 
@@ -17,8 +17,8 @@ class MatrixInterface(interphase.Interface):
                 control_size='auto', control_response=100, moveable=False,
                 position_offset=(0,88), font_color=(50,150,200),
                 button_image='button.png', scroll_button='vertical')
-        pygame.draw.rect(self.get_panel_image(True), (50,60,100), (162,28,178,48), 1)
-        img = pygame.Surface((100,100), pygame.SRCALPHA)
+        pg.draw.rect(self.get_panel_image(True), (50,60,100), (162,28,178,48), 1)
+        img = pg.Surface((100,100), pg.SRCALPHA)
         img.fill((50,50,50,150))
         self.set_control_image(surface=img)
         self.dir = {'N':(0,-1), 'S':(0,1), 'W':(-1,0), 'E':(1,0), 'NW':(-1,-1), 'NE':(1,-1), 'SW':(-1,1), 'SE':(1,1)}
@@ -28,7 +28,7 @@ class MatrixInterface(interphase.Interface):
         self.panel_up = True
         if env.platform == 'js':
             self.add_controls_js()
-            pygame.display.textbox_init()
+            pg.display.textbox_init()
 
     def add_controls(self):
         self.add(
@@ -279,7 +279,7 @@ class MatrixInterface(interphase.Interface):
             elif state.control == 'PatternGet':
                 self.retrieve_pattern()
             elif state.control == 'Textbox':
-                pygame.display.textarea.toggle()
+                pg.display.textarea.toggle()
             elif state.control == 'Rate':
                 self.matrix.set_tick(int(state.value.split(' ')[-1]))
             elif state.control in ('__Fix', '__TopFix'):

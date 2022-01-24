@@ -18,35 +18,35 @@ Copyright (C) 2015 James Garnon
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Cell Matrix version 1.0
-Download Site: http://gatc.ca
+Download Site: https://gatc.ca
 """
 
 from __future__ import division
 import os, sys, math, random
 if os.name in ('posix', 'nt', 'os2', 'ce', 'riscos'):
-    import pygame
+    import pygame as pg
     platform = 'pc'
 elif os.name == 'java':
     import pyj2d
-    sys.modules['pygame'] = pyj2d
-    pygame = pyj2d
+    sys.modules['pg'] = pyj2d
+    pg = pyj2d
     platform = 'jvm'
     if sys.version_info[0:2] == (2,2):
         from sets import Set
 else:
-    import pyjsdl as pygame
+    import pyjsdl as pg
     platform = 'js'
 
 import interphase
-interphase.init(pygame)
+interphase.init(pg)
 
 import env
-env.engine = pygame
+env.engine = pg
 env.interface = interphase
 env.platform = platform
 env.size = 8
-env.color0 = pygame.Color(0,0,0)
-env.color1 = pygame.Color(0,255,0)
+env.color0 = pg.Color(0,0,0)
+env.color1 = pg.Color(0,255,0)
 
 from control import Control
 from interface import MatrixInterface
@@ -59,10 +59,10 @@ class Matrix:
         self.size = env.size
         self.color0 = env.color0
         self.color1 = env.color1
-        self.rect = pygame.Rect(0, 0, self.size-2, self.size-2)
-        self.cell0 = pygame.Surface((self.size-2, self.size-2))
+        self.rect = pg.Rect(0, 0, self.size-2, self.size-2)
+        self.cell0 = pg.Surface((self.size-2, self.size-2))
         self.cell0.fill(self.color0)
-        self.cell1 = pygame.Surface((self.size-2, self.size-2))
+        self.cell1 = pg.Surface((self.size-2, self.size-2))
         self.cell1.fill(self.color1)
         self.setPool = []
         self.listPool = []
@@ -72,11 +72,11 @@ class Matrix:
         if self.panel.matrix:
             psize = self.panel.get_size()
             ppos = self.panel.get_position()
-            self.panel_clear1 = pygame.Surface(psize)
-            self.panel_pos1 = pygame.Rect((ppos[0]-(psize[0]//2),ppos[1]-(psize[1]//2)), psize)
+            self.panel_clear1 = pg.Surface(psize)
+            self.panel_pos1 = pg.Rect((ppos[0]-(psize[0]//2),ppos[1]-(psize[1]//2)), psize)
             self.panel_clear1.blit(self.screen, (0,0), self.panel_pos1)     #pyjsdl blit - IndexSizeError - clip area
-            self.panel_clear2 = pygame.Surface((psize[0],12))
-            self.panel_pos2 = pygame.Rect((ppos[0]-(psize[0]//2),ppos[1]-(psize[1]//2)+88), (psize[0],12))
+            self.panel_clear2 = pg.Surface((psize[0],12))
+            self.panel_pos2 = pg.Rect((ppos[0]-(psize[0]//2),ppos[1]-(psize[1]//2)+88), (psize[0],12))
             self.panel_clear2.blit(self.screen, (0,0), self.panel_pos2)
             self.panel_pos = ppos[1]
             self.panel_display = True
@@ -116,23 +116,23 @@ class Matrix:
         self.update_list = []
 
     def setup(self, w, h):
-        screen = pygame.display.get_surface()
-        background = pygame.Surface((w*self.size,h*self.size))
+        screen = pg.display.get_surface()
+        background = pg.Surface((w*self.size,h*self.size))
         background.fill((20,40,60))
         for x in range(w):
             for y in range(h):
                 background.blit(self.cell0, ((x*self.size)+1, (y*self.size)+1))
         screen.blit(background, (0,0))
-        pygame.display.flip()
-        pygame.display.set_caption('Cell Matrix')
-        icon = pygame.image.load(os.path.join('data', 'icon.png'))
-        pygame.display.set_icon(icon)
-        pygame.event.set_blocked(pygame.MOUSEMOTION)
-        pygame.key.set_repeat(100,10)
+        pg.display.flip()
+        pg.display.set_caption('Cell Matrix')
+        icon = pg.image.load(os.path.join('data', 'icon.png'))
+        pg.display.set_icon(icon)
+        pg.event.set_blocked(pg.MOUSEMOTION)
+        pg.key.set_repeat(100,10)
         panel = MatrixInterface(self)
         panel._clipboard_init()
         control = Control(self, panel)
-        clock = pygame.time.Clock()
+        clock = pg.time.Clock()
         return screen, background, control, panel, clock
 
     def set_tick(self, value):
@@ -215,7 +215,7 @@ class Matrix:
         self.view[0] = 0
         self.view[1] = 0
         self.screen.blit(self.background, (0,0))
-        pygame.display.flip()
+        pg.display.flip()
 
     def clear_panel(self):
         self.panel_pos = self.panel.get_position()[1]
@@ -259,7 +259,7 @@ class Matrix:
 
     def cell_add(self, x, y):
         self.grid[(x, y)] = None
-        self.update_list.append(pygame.Rect(x*self.size, y*self.size, self.size, self.size))
+        self.update_list.append(pg.Rect(x*self.size, y*self.size, self.size, self.size))
 
     def cell_remove(self, x, y):
         if self.grid[(x,y)]:
@@ -424,16 +424,16 @@ class Matrix:
         if self.panel_display:
             self.panel.draw(self.screen)
         if not self.scroll:
-            pygame.display.update(self.update_list)
+            pg.display.update(self.update_list)
         else:
-            pygame.display.update()
+            pg.display.update()
             self.scroll = False
         self.clock.tick(30)
 
 
 def setup(w,h):
-    pygame.init()
-    pygame.display.set_mode((w*env.size,h*env.size))
+    pg.init()
+    pg.display.set_mode((w*env.size,h*env.size))
 
 
 def main():
@@ -452,13 +452,13 @@ def run():
 def pre_run():
     global matrix
     matrix = Matrix(60, 50)
-    pygame.display.setup(run)
+    pg.display.setup(run)
 
 def main_js():
     setup(60, 50)
     img = ['data/control_n.png', 'data/control_s.png', 'data/control_w.png',
             'data/control_e.png', 'data/button.png', 'data/icon.png']
-    pygame.display.setup(pre_run, img)
+    pg.display.setup(pre_run, img)
 
 
 if __name__ == '__main__':
